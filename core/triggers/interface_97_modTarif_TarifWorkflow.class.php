@@ -329,6 +329,7 @@ class InterfaceTarifWorkflow
 			//Gestion du poids et de l'unité transmise
 			if(!empty($_REQUEST['poidsAff_product'])){ //Si un poids produit a été transmis
 				$poids = ($_REQUEST['poidsAff_product'] > 0) ? $_REQUEST['poidsAff_product'] : 1;
+				
 			}
 			elseif(!empty($_REQUEST['poidsAff_libre'])){ //Si un poids ligne libre a été transmis
 				$poids = ($_REQUEST['poidsAff_libre'] > 0) ? $_REQUEST['poidsAff_libre'] : 1;
@@ -588,6 +589,48 @@ class InterfaceTarifWorkflow
 			if($action == 'LINEORDER_SUPPLIER_CREATE') {
 				$object = $tmpObject;
 			}
+			
+			
+		} elseif(($action === 'LINEORDER_INSERT' || $action === 'LINEPROPAL_INSERT' || $action === 'LINEBILL_INSERT' || $action === 'LINEORDER_SUPPLIER_CREATE')  && $object->product_type ==0){
+			if(get_class($object) == 'PropaleLigne'){
+				 $table = 'propal';
+				 $tabledet = 'propaldet';
+			}
+			elseif(get_class($object) == 'OrderLine'){
+				 $table = 'commande';
+				 $tabledet = 'commandedet';
+			}
+			elseif(get_class($object) == 'FactureLigne'){
+				 $table = 'facture';
+				 $tabledet = 'facturedet';
+			}
+			elseif(get_class($object) == 'CommandeFournisseur' || get_class($object) == 'CommandeFournisseurLigne'){
+				$table = "commande_fournisseur"; 
+				$tabledet = 'commande_fournisseurdet'; 
+				$parentfield = 'fk_commande';
+			}
+			
+			if(!empty($_REQUEST['poidsAff_product'])){ //Si un poids produit a été transmis
+				$poids = ($_REQUEST['poidsAff_product'] > 0) ? $_REQUEST['poidsAff_product'] : 1;
+				
+			}
+			elseif(!empty($_REQUEST['poidsAff_libre'])){ //Si un poids ligne libre a été transmis
+				$poids = ($_REQUEST['poidsAff_libre'] > 0) ? $_REQUEST['poidsAff_libre'] : 1;
+			}
+		
+			if(isset($_REQUEST['weight_unitsAff_product'])){ //Si on a un unité produit transmise
+				$weight_units = $_REQUEST['weight_unitsAff_product'];
+			}
+			else{ //Sinon on est sur un tarif à l'unité donc pas de gestion de poids => 69 chiffre pris au hasard
+				$weight_units = 69;
+			}
+			if(!empty($poids)){
+				$this->db->query("INSERT INTO ".MAIN_DB_PREFIX.$table." SET tarif_poids = ".$poids.", poids = ".$weight_units." WHERE rowid = ".$object->rowid);
+			}
+			
+			
+			
+			
 		}
 
 		elseif(($action == 'LINEORDER_UPDATE' || $action == 'LINEPROPAL_UPDATE' || $action == 'LINEBILL_UPDATE'  || $action==='LINEORDER_SUPPLIER_UPDATE') 

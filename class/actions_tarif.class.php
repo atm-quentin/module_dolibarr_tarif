@@ -42,24 +42,29 @@ class ActionsTarif
 												} else {
 													$("span:contains('Mode Avancé')").text('Mode Standard');
 													$('label[name=label_long]').text('Formule  :');
+													$('input[name=metre_larg]').val("");
 												}
 											
 											}
 										}
 										,"Ok": function() {
+											var metre = $('input[name=metre_long]').val();
+											var larg = $('input[name=metre_larg]').val();
+											$('input[name=metre]').val(metre );
+											if(larg == ""){
+												$('input[name=poidsAff_product]').val( eval(metre) );		
+											} else {
+												$('input[name=poidsAff_product]').val( eval(metre)*eval(larg) );
+												if($('input[name=price_ht]').val()!= ""){
+													$('input[name=price_ht]').val(parseFloat($('input[name=price_ht]').val())*eval(metre)*eval(larg));
+												}
+											}
 											$(this).dialog("close");
 										}
 										,"Annuler": function() {
 											$(this).dialog("close");
 										}
 									  }
-							,close: function( event, ui ) {
-								var metre = $('input[name=metre_long]').val();
-								$('input[name=metre]').val(metre );
-								$('input[name=poidsAff_product]').val( eval(metre) );		
-							}
-							
-							
 						});
 					});
 					
@@ -71,12 +76,12 @@ class ActionsTarif
 				</script>
 					
 				
-				<?php
+				<?php 
 		
 			if($action === 'editline' || $action === "edit_line"){
 				
 				$lineid = GETPOST('lineid');
-				var_dump($lineid);
+				
 				?>	
 				<script type="text/javascript">
 					/* script tarif */
