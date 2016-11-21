@@ -21,15 +21,32 @@ class ActionsTarif
 			|| in_array('ordersuppliercard',explode(':',$parameters['context']))
     		|| in_array('invoicecard',explode(':',$parameters['context'])))
         {
+        	
 			?>
 				<script type="text/javascript">
-					var dialog = '<div id="dialog-metre" title="<?php print $langs->trans('tarifSaveMetre'); ?>"><p><input type="text" name="metre_desc" /></p></div>';
+					var dialog = '<div id="dialog-metre" title="<?php print $langs->trans('tarifSaveMetre'); ?>"><p><label name="label_long">Longueur :</label><input type="text" name="metre_long" /><label name="label_larg">Largeur : </label><input type="text" name="metre_larg" /></p></div>';
 					$(document).ready(function() {
 						$('body').append(dialog);
 						$('#dialog-metre').dialog({
 							autoOpen:false
-							,buttons: {
-										"Ok": function() {
+							,buttons: { 
+										"Mode Avancé" : function(){
+											$('input[name=metre_larg]').hide();
+											$('label[name=label_larg]').hide();
+											if($("span:contains('Mode Avancé')")){
+												if($("span:contains('Mode Standard')").text()){
+													$("span:contains('Mode Standard')").text('Mode Avancé');
+													$('label[name=label_long]').text('Longueur  :');
+													$('input[name=metre_larg]').show();
+													$('label[name=label_larg]').show();
+												} else {
+													$("span:contains('Mode Avancé')").text('Mode Standard');
+													$('label[name=label_long]').text('Formule  :');
+												}
+											
+											}
+										}
+										,"Ok": function() {
 											$(this).dialog("close");
 										}
 										,"Annuler": function() {
@@ -37,28 +54,76 @@ class ActionsTarif
 										}
 									  }
 							,close: function( event, ui ) {
-								var metre = $('input[name=metre_desc]').val();
+								var metre = $('input[name=metre_long]').val();
 								$('input[name=metre]').val(metre );
 								$('input[name=poidsAff_product]').val( eval(metre) );		
 							}
+							
+							
 						});
 					});
 					
 					function showMetre() {
-						$('textarea[name=metre_desc]').val( $('input[name=metre]').val() );	
+						$('textarea[name=metre_long]').val( $('input[name=metre]').val() );	
 						$('#dialog-metre').dialog('open');	
 					}
-	
+					
 				</script>
 					
 				
 				<?php
 		
+			if($action === 'editline' || $action === "edit_line"){
+				
+				$lineid = GETPOST('lineid');
+				var_dump($lineid);
+				?>	
+				<script type="text/javascript">
+					/* script tarif */
+					$(document).ready(function(){
+						<?php
+						
+						dol_include_once('/product/class/html.formproduct.class.php');
+						$formproduct = new FormProduct($db);
+						
+						if(defined('DONT_ADD_UNIT_SELECT') && DONT_ADD_UNIT_SELECT) {
+							null;
+						}	
+						else {
+							$sql = "SELECT e.tarif_poids, e.poids, pe.unite_vente,e.metre 
+	         									 FROM ".MAIN_DB_PREFIX.$object->table_element_line." as e 
+	         									 	LEFT JOIN ".MAIN_DB_PREFIX."product_extrafields as pe ON (e.fk_product = pe.fk_object)
+	         									 WHERE e.rowid = ".$lineid;
+							$resql = $db->query($sql);
+							$res = $db->fetch_object($resql);
+							
+							?>$('input[name=qty]').parent().after('<td align="right"><?php
+							
+									if($conf->global->TARIF_CAN_SET_PACKAGE_ON_LINE) {
+										?><input id="poidsAff" type="text" value="<?php echo (!is_null($res->tarif_poids)) ? number_format($res->tarif_poids,2,",","") : '' ?>" name="poidsAff_product" size="6" /><?php	
+									}
+ 									print ($res->poids==69) ? 'U' : $formproduct->select_measuring_units("weight_unitsAff_product", ($res->unite_vente) ? $res->unite_vente : DOL_DEFAULT_UNIT, $res->poids); 
+							
+									if($conf->global->TARIF_USE_METRE) {
+										print '<a href="javascript:showMetre()">M</a><input type="hidden" name="metre" value="'.$res->metre.'" />';
+									}
+							
+							?></td>');
+
+							<?php
+						}
+						
+						?>
+
+					});
+				</script>
+				<?php
+			}
 		}
 		
 	}
 	 
-	function formEditProductOptions($parameters, &$object, &$action, $hookmanager) 
+	function insertExtraFields($parameters, &$object, &$action, $hookmanager) 
     {
     	global $db,$conf;
 		
@@ -86,51 +151,7 @@ class ActionsTarif
 			
 			
 			
-			if($action === 'editline' || $action === "edit_line"){
-				
-				$currentLine = &$parameters['line'];
-				
-				?>
-				<script type="text/javascript">
-					/* script tarif */
-					$(document).ready(function(){
-						
-						<?php
-						$formproduct = new FormProduct($db);
-						
-						if(defined('DONT_ADD_UNIT_SELECT') && DONT_ADD_UNIT_SELECT) {
-							null;
-						}	
-						else {
-							$sql = "SELECT e.tarif_poids, e.poids, pe.unite_vente,e.metre 
-	         									 FROM ".MAIN_DB_PREFIX.$object->table_element_line." as e 
-	         									 	LEFT JOIN ".MAIN_DB_PREFIX."product_extrafields as pe ON (e.fk_product = pe.fk_object)
-	         									 WHERE e.rowid = ".$currentLine->id;
-							$resql = $db->query($sql);
-							$res = $db->fetch_object($resql);
-							
-							?>$('input[name=qty]').parent().after('<td align="right"><?php
-							
-									if($conf->global->TARIF_CAN_SET_PACKAGE_ON_LINE) {
-										?><input id="poidsAff" type="text" value="<?php echo (!is_null($res->tarif_poids)) ? number_format($res->tarif_poids,2,",","") : '' ?>" name="poidsAff_product" size="6" /><?php	
-									}
- 									print ($res->poids==69) ? 'U' : $formproduct->select_measuring_units("weight_unitsAff_product", ($res->unite_vente) ? $res->unite_vente : DOL_DEFAULT_UNIT, $res->poids); 
-							
-									if($conf->global->TARIF_USE_METRE) {
-										print '<a href="javascript:showMetre()">M</a><input type="hidden" name="metre" value="'.$res->metre.'" />';
-									}
-							
-							?></td>');
-
-							<?php
-						}
-						
-						?>
-
-					});
-				</script>
-				<?php
-			}
+			
 
 			$this->resprints='';
 		}
