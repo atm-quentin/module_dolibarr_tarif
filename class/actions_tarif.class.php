@@ -52,7 +52,10 @@ class ActionsTarif
 											var larg = $('input[name=metre_larg]').val();
 											$('input[name=metre]').val(metre );
 											if(larg == ""){
-												$('input[name=poidsAff_product]').val( eval(metre) );		
+												$('input[name=poidsAff_product]').val( eval(metre) );
+												if($('input[name=price_ht]').val()!= ""){
+													$('input[name=price_ht]').val(parseFloat($('input[name=price_ht]').val())*eval(metre));	
+												}		
 											} else {
 												$('input[name=poidsAff_product]').val( eval(metre)*eval(larg) );
 												if($('input[name=price_ht]').val()!= ""){
