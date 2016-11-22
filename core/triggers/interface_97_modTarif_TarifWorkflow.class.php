@@ -589,7 +589,12 @@ class InterfaceTarifWorkflow
 			if($action == 'LINEORDER_SUPPLIER_CREATE') {
 				$object = $tmpObject;
 			}
-			
+			if(!empty($poids) && $object->product_type ==0){
+				$object->price *= $poids;
+				$object->subprice *= $poids;
+				$this->_updateTotauxLine($object,$object->qty);
+				$object->update($user);	
+			}
 			
 		} elseif(($action === 'LINEORDER_INSERT' || $action === 'LINEPROPAL_INSERT' || $action === 'LINEBILL_INSERT' || $action === 'LINEORDER_SUPPLIER_CREATE')  && $object->product_type ==0){
 			if(get_class($object) == 'PropaleLigne'){
@@ -625,7 +630,8 @@ class InterfaceTarifWorkflow
 				$weight_units = 69;
 			}
 			if(!empty($poids)){
-				$this->db->query("INSERT INTO ".MAIN_DB_PREFIX.$table." SET tarif_poids = ".$poids.", poids = ".$weight_units." WHERE rowid = ".$object->rowid);
+				$this->db->query("UPDATE ".MAIN_DB_PREFIX.$table." SET tarif_poids = ".$poids.", poids = ".$weight_units." WHERE rowid = ".$object->rowid);
+				$this->db->query("UPDATE ".MAIN_DB_PREFIX.$tabledet." SET tarif_poids = ".$poids.", poids = ".$weight_units." WHERE rowid = ".$object->rowid);
 			}
 			
 			
